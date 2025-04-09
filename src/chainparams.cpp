@@ -300,7 +300,7 @@ public:
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60; // fulfilled requests expire in 1 hour
 
-        vSporkAddresses = {"VG4V1GK4M6Xcp2qUSEus5Z1imoNNpwhmy2"};
+        vSporkAddresses = {"VUMFzVvBypw2vHJfRB35XRSFur5i1mLFty"};
         nMinSporkKeys = 1;
         fBIP9CheckMasternodesUpgraded = true;
         consensus.fLLMQAllowDummyCommitments = false;

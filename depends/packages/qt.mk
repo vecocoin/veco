@@ -9,7 +9,7 @@ $(package)_linux_dependencies=freetype fontconfig libxcb libX11 xproto libXext
 $(package)_build_subdir=qtbase
 $(package)_qt_libs=corelib network widgets gui plugins testlib
 $(package)_patches=mac-qmake.conf mingw-uuidof.patch pidlist_absolute.patch fix-xcb-include-order.patch
-$(package)_patches+=fix_qt_configure.patch fix_qt_pkgconfig.patch fix-cocoahelpers-macos.patch qfixed-coretext.patch
+$(package)_patches+=fix_qt_configure.patch fix_qt_pkgconfig.patch fix-cocoahelpers-macos.patch qfixed-coretext.patch fix-file-id-info-conflict.patch
 # NOTE: fix_qt_configure.patch is only needed for Qt 5.7, newer versions don't have this issue.
 # Remove it after bumping $(package)_version to 5.8+.
 
@@ -118,12 +118,12 @@ define $(package)_extract_cmds
   echo "$($(package)_qttranslations_sha256_hash)  $($(package)_source_dir)/$($(package)_qttranslations_file_name)" >> $($(package)_extract_dir)/.$($(package)_file_name).hash && \
   echo "$($(package)_qttools_sha256_hash)  $($(package)_source_dir)/$($(package)_qttools_file_name)" >> $($(package)_extract_dir)/.$($(package)_file_name).hash && \
   $(build_SHA256SUM) -c $($(package)_extract_dir)/.$($(package)_file_name).hash && \
-  mkdir qtbase && \
-  tar --strip-components=1 -xf $($(package)_source) -C qtbase && \
-  mkdir qttranslations && \
-  tar --strip-components=1 -xf $($(package)_source_dir)/$($(package)_qttranslations_file_name) -C qttranslations && \
-  mkdir qttools && \
-  tar --strip-components=1 -xf $($(package)_source_dir)/$($(package)_qttools_file_name) -C qttools
+  mkdir -p $($(package)_extract_dir)/qtbase && \
+  tar --strip-components=1 -xf $($(package)_source) -C $($(package)_extract_dir)/qtbase && \
+  mkdir -p $($(package)_extract_dir)/qttranslations && \
+  tar --strip-components=1 -xf $($(package)_source_dir)/$($(package)_qttranslations_file_name) -C $($(package)_extract_dir)/qttranslations && \
+  mkdir -p $($(package)_extract_dir)/qttools && \
+  tar --strip-components=1 -xf $($(package)_source_dir)/$($(package)_qttools_file_name) -C $($(package)_extract_dir)/qttools
 endef
 
 
@@ -151,21 +151,23 @@ define $(package)_preprocess_cmds
   echo "!host_build: QMAKE_LFLAGS     += $($(package)_ldflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
   sed -i.old "s|QMAKE_CFLAGS            = |!host_build: QMAKE_CFLAGS            = $($(package)_cflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "s|QMAKE_LFLAGS            = |!host_build: QMAKE_LFLAGS            = $($(package)_ldflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
-  sed -i.old "s|QMAKE_CXXFLAGS          = |!host_build: QMAKE_CXXFLAGS            = $($(package)_cxxflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf
-
+  sed -i.old "s|QMAKE_CXXFLAGS          = |!host_build: QMAKE_CXXFLAGS            = $($(package)_cxxflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
+  sed -i '/typedef struct _FILE_ID_INFO {/,/} FILE_ID_INFO, \*PFILE_ID_INFO;/d' $($(package)_extract_dir)/qtbase/src/corelib/io/qfilesystemengine_win.cpp
 endef
 
 define $(package)_config_cmds
+  chmod +x configure && \
   export PKG_CONFIG_LIBDIR=$(host_prefix)/lib/pkgconfig && \
-  export PKG_CONFIG_PATH=$(host_prefix)/share/pkgconfig  && \
+  export PKG_CONFIG_PATH=$(host_prefix)/share/pkgconfig && \
   ./configure $($(package)_config_opts) && \
   echo "host_build: QT_CONFIG ~= s/system-zlib/zlib" >> mkspecs/qconfig.pri && \
   echo "CONFIG += force_bootstrap" >> mkspecs/qconfig.pri && \
   $(MAKE) sub-src-clean && \
   cd ../qttranslations && ../qtbase/bin/qmake qttranslations.pro -o Makefile && \
-  cd translations && ../../qtbase/bin/qmake translations.pro -o Makefile && cd ../.. &&\
+  cd translations && ../../qtbase/bin/qmake translations.pro -o Makefile && cd ../.. && \
   cd qttools/src/linguist/lrelease/ && ../../../../qtbase/bin/qmake lrelease.pro -o Makefile
 endef
+
 
 define $(package)_build_cmds
   $(MAKE) -C src $(addprefix sub-,$($(package)_qt_libs)) && \

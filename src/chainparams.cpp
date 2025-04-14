@@ -261,13 +261,6 @@ public:
         assert(consensus.hashGenesisBlock == uint256S("0x000003fd1dff397d1be86183efd9e13f0316b5f5a3082bac91975a421bc43021"));
         assert(genesis.hashMerkleRoot == uint256S("0xde4fe11d6d0c735a192d4e6eed593ad575ccd671ff4ff0d9188e347e067d028d"));
 
-
-        vSeeds.push_back(CDNSSeedData("veco.to", "dnsseed1.veco.to"));
-        vSeeds.push_back(CDNSSeedData("veco.to", "dnsseed2.veco.to"));
-        vSeeds.push_back(CDNSSeedData("veco.to", "block.veco.to"));
-        vSeeds.push_back(CDNSSeedData("veco.to", "vision.veco.to"));
-        vSeeds.push_back(CDNSSeedData("veco.to", "edu.veco.to"));
-
         // Veco addresses start with 'X'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
         // Veco script addresses start with '7'

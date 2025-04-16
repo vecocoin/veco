@@ -1,8 +1,31 @@
-This docker image is built and pushed from travis. It does not contain any default configs or any
-special startup scripts. This is to keep it simple and to not copy too much logic from the
-official/supported Docker Images found at https://hub.docker.com/r/vecopay/vecod/
+# Cross-Compiling VECO for Windows (.exe) using Docker & x86_64-w64-mingw32
 
-The image is mostly used for devops purposes, e.g. for testnet/devnet deployments. Regular users
-should use the official images instead of this one.
+This setup uses a Docker container with MinGW to build Windows binaries (e.g., `veco-qt.exe` and `veco-cli.exe`) from Linux.
 
-**NOTE: Please update the image description at https://hub.docker.com/r/vecopay/vecod-develop/ when changing the above text**
+1. Build the Docker image:
+
+`docker build -f docker/Dockerfile.mingw64 -t veco-windows-build .`
+
+2. Run the container & mount your source code:
+
+`docker run -it --rm -v "$PWD":/workspace veco-windows-build`
+
+3. Inside the container, build the dependencies:
+```
+cd depends
+make HOST=x86_64-w64-mingw32
+```
+You can try `make HOST=x86_64-w64-mingw32 -j$(nproc)` to speed up the process but this may result in errors.
+
+4. Configure and compile
+```
+cd ..
+./autogen.sh
+./configure --disable-tests --disable-bench --with-incompatible-bdb --prefix=$(pwd)/depends/x86_64-w64-mingw32
+make -j$(nproc)
+```
+
+5. Strip the resulting qt binary:
+
+`x86_64-w64-mingw32-strip src/qt/veco-qt.exe`
+

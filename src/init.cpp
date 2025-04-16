@@ -653,8 +653,8 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/VecoOfficial/Veco>";
-    const std::string URL_WEBSITE = "<https://veco.to>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/vecocoin/veco>";
+    const std::string URL_WEBSITE = "<https://vecocoin.com>";
 
     return CopyrightHolders(_("Copyright (C)"), 2014, COPYRIGHT_YEAR) + "\n" +
            "\n" +

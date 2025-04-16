@@ -6,7 +6,7 @@ $(package)_file_name=$($(package)_version).tar.gz
 $(package)_sha256_hash=b3ec74a77a7b6795f84b05e051a0824ef8d9e05b04b2993f01040f35689aa87c
 $(package)_dependencies=gmp
 #$(package)_patches=...TODO (when we switch back to https://github.com/Chia-Network/bls-signatures)
-
+$(package)_patches=remove-runtest.patch
 #define $(package)_preprocess_cmds
 #  for i in $($(package)_patches); do patch -N -p1 < $($(package)_patch_dir)/$$$$i; done
 #endef
@@ -22,6 +22,9 @@ define $(package)_set_vars
   $(package)_config_opts_x86_64+= -DWSIZE=64
   $(package)_config_opts_arm+= -DWSIZE=32
   $(package)_config_opts_debug=-DDEBUG=ON -DCMAKE_BUILD_TYPE=Debug
+  $(package)_config_opts+= -DCMAKE_C_FLAGS="-I$($(package)_staging_dir)/$(host_prefix)/include"
+  $(package)_config_opts+= -DCMAKE_CXX_FLAGS="-I$($(package)_staging_dir)/$(host_prefix)/include"
+  $(package)_config_opts+= -DTESTS=OFF -DBENCH=OFF
 
   ifneq ($(darwin_native_toolchain),)
     $(package)_config_opts_darwin+= -DCMAKE_AR="$(host_prefix)/native/bin/$($(package)_ar)"
@@ -36,7 +39,8 @@ define $(package)_config_cmds
   export CXXFLAGS="$($(package)_cxxflags) $($(package)_cppflags)" && \
   export LDFLAGS="$($(package)_ldflags)" && \
   mkdir -p build && cd build && \
-  cmake ../ $($(package)_config_opts)
+  cmake ../ $($(package)_config_opts) && \
+  grep -i gmp CMakeCache.txt || true
 endef
 
 define $(package)_build_cmds
@@ -47,4 +51,8 @@ endef
 define $(package)_stage_cmds
   cd build && \
   $(MAKE) install
+endef
+
+define $(package)_preprocess_cmds
+  for i in $($(package)_patches); do patch -N -p1 < $($(package)_patch_dir)/$$$$i; done
 endef
